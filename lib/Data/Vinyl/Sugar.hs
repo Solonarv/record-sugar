@@ -1,14 +1,38 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-|
+Provides "syntax sugar" for constructing @vinyl@ records with
+named fields, using GHC's OverloadedLabels extension.
+
+This lets you create records using the following syntax,
+clearly associating each field's name with its value:
+
+@
+john :: 'V.Rec' 'V.ElField' ['("name", String), '("age", Int)]
+john = 'rec_'
+  #age 30
+  #name "John Doe"
+@
+
+You can also extend an existing record using 'extend_':
+
+@
+john' :: 'V.Rec' 'V.ElField' ['("bornAt", String), '("name", String), '("age", Int)]
+john' = 'extend_' john
+  #bornAt "Zurich, Switzerland"
+@
+-}
 module Data.Vinyl.Sugar
   (
   -- * Record-construction sugar
     rec_
+  , extend_
   -- * Extending the syntax sugar
   , NamedField(..)
   , RecSugarTy(..)
@@ -45,13 +69,16 @@ class NamedField (s :: Symbol) (r :: k) (f :: k -> Type) (a :: Type)
   , r f -> a
   where
   {- |
-  @
-  toNamedField :: KnownSymbol s => a -> ElField '(s, a)
-  @
+  Convert a value into a vinyl record element. You can imagine that
+  this has the following type:
+
+@
+toNamedField :: KnownSymbol s => a -> ElField '(s, a)
+@
   -}
   toNamedField :: a -> f r
 
-instance KnownSymbol s => NamedField s '(s, a) V.ElField a where
+instance (KnownSymbol s, s ~ s') => NamedField s' '(s, a) V.ElField a where
   toNamedField = V.Field
 
 {- |
@@ -69,6 +96,7 @@ newtype MyRec rs = MyRec { unMyRec :: 'V.Rec' MyFunctor rs }
 
 instance 'RecSugarTy' ('V.Rec' MyFunctor rs) (MyRec rs) where
   rec' = MyRec
+@
 -}
 class RecSugarTy e o | o -> e where
   rec' :: e -> o
@@ -85,15 +113,15 @@ instance V.NatToInt (V.RLength rs) => RecSugarTy (V.Rec f rs) (V.ARec f rs) wher
 instance Storable (V.Rec f rs) => RecSugarTy (V.Rec f rs) (V.SRec f rs) where
   rec' = V.toSRec
 
-{-|
-Provides "syntax sugar" for constructing @vinyl@ records with
-named fields, using GHC's OverloadedLabels extension.
-
-john :: 'V.Rec' 'V.ElField' '[("name", String), ("age", Int)]
-john = rec_
-  #name "John Doe"
-  #age 30
-
+{- |
+Create a record by adding fields to the empty record. This is the
+function you will use most of the time.
 -}
 rec_ :: RecSugarTy (V.Rec f '[]) o => o
 rec_ = rec' V.RNil
+
+{- |
+Create a record by extending an existing record.
+-}
+extend_ :: RecSugarTy (V.Rec f rs) o => V.Rec f rs -> o
+extend_ = rec'
