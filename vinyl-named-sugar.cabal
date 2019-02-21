@@ -6,7 +6,7 @@ cabal-version:       2.2
 name:                vinyl-named-sugar
 version:             0.1.0.0
 synopsis:            Syntax sugar for vinyl records using overloaded labels.
-description:         Provides `rec_ #foo fooVal #bar barVal` syntax for constructing vinyl records.
+description:         Provides @rec_ \#foo fooVal \#bar barVal@ syntax for constructing @vinyl@ records.
 homepage:            https://github.com/Solonarv/record-sugar#readme
 bug-reports:         https://github.com/Solonarv/record-sugar/issues
 license:             MIT
