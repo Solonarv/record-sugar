@@ -17,6 +17,10 @@ copyright:           2019 Solonarv
 category:            Data
 extra-source-files:  CHANGELOG.md, README.md, examples/*.hs
 
+source-repository head
+  type:                git
+  location:            https://github.com/Solonarv/record-sugar
+
 library
   exposed-modules:     Data.Vinyl.Sugar
   -- other-modules:
